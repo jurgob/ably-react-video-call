@@ -10,31 +10,22 @@ export default function Video() {
     const remoteVideoRef = useRef<HTMLVideoElement>(null);
     const [offer, setOffer] = useState<RTCSessionDescriptionInit | null>(null);
     const [answer, setAnswer] = useState<RTCSessionDescriptionInit | null>(null);
-    // const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
-    // const [videoPlaying, setVideoPlaying] = useState(true);
-    // const [muted, setMuted] = useState(false);
+    const [localPeerConnection, setLocalPeerConnection] = useState<RTCPeerConnection>(new RTCPeerConnection());
+    const [remotePeerConnection, setRemotePeerConnection] = useState<RTCPeerConnection>(new RTCPeerConnection());
+    
     function startPeerConnections(stream:MediaStream) {
+        setLocalPeerConnection(new RTCPeerConnection());
+        setRemotePeerConnection(new RTCPeerConnection());
 
-        const localPeerConnection = new RTCPeerConnection();
-        const remotePeerConnection = new RTCPeerConnection();
         localVideoRef.current!.srcObject = stream;
-        
-        console.log(`stream`, stream);
-        
+                
         stream.getTracks().forEach(track => {
-            console.log(`tadd rack`, track);
             localPeerConnection.addTrack(track, stream)
         });
 
         remotePeerConnection.ontrack = function (e) {
             remoteVideoRef.current!.srcObject = e.streams[0];
         };
-
-        // remotePeerConnection.onnegotiationneeded = e => {
-        //     if (remotePeerConnection.signalingState != "stable") return;
-            
-        // }
-        
 
         remotePeerConnection.onicecandidate = e => {
             console.log('remotePeerConnection onicecandidate', e );
@@ -65,7 +56,6 @@ export default function Video() {
             })
             .then((offer) => {
                 remotePeerConnection.setRemoteDescription(offer)
-                // localPeerConnection.localDescription && remotePeerConnection.setRemoteDescription(localPeerConnection.localDescription)
             })
             .then(() => {
                 return remotePeerConnection.createAnswer()
