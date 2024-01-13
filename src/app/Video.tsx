@@ -9,6 +9,7 @@ export default function Video() {
     const localVideoRef = useRef<HTMLVideoElement>(null);
     const remoteVideoRef = useRef<HTMLVideoElement>(null);
     const [offer, setOffer] = useState<RTCSessionDescriptionInit | null>(null);
+    const [answer, setAnswer] = useState<RTCSessionDescriptionInit | null>(null);
     // const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
     // const [videoPlaying, setVideoPlaying] = useState(true);
     // const [muted, setMuted] = useState(false);
@@ -55,7 +56,7 @@ export default function Video() {
 
         localPeerConnection.createOffer()
             .then(offer => {
-                console.log(`2---- offer, `, offer)
+                setOffer(offer)
                 if(offer) {
                     localPeerConnection.setLocalDescription(offer)
                 }
@@ -69,42 +70,24 @@ export default function Video() {
             .then(() => {
                 return remotePeerConnection.createAnswer()
             })
-            .then(answer => remotePeerConnection.setLocalDescription(answer))
+            .then(answer => {
+                setAnswer(answer)
+                return remotePeerConnection.setLocalDescription(answer)
+            })
             .then(() => {
-                console.log('222  YOLLOOOOOOO')
-                console.log('remotePeerConnection.localDescription', remotePeerConnection.localDescription)
                 remotePeerConnection.localDescription && localPeerConnection.setRemoteDescription(remotePeerConnection.localDescription)
             })
-            // .then(() => {
-            //     localPeerConnection.onicecandidate = (e) => {
-            //         if (e.candidate) {
-            //             console.log('localPeerConnection onicecandidate', e.candidate)
-            //             remotePeerConnection.addIceCandidate(e.candidate)
-            //                 .catch(e => {
-            //                     console.error(e)
-            //                 });
-            //         }
-            //     }
-            // })
             .catch(e => {
                 console.error(e)
             });
     }
-    console.log('VIDEO' )
 
     useEffect(() => {
-        console.log('VIDEO use effect')
-        
         navigator.mediaDevices
             .getUserMedia({ video: true, audio: true })
             .then((stream) => {
-                startPeerConnections(stream);
-                // setMediaStream(stream);
-                
+                startPeerConnections(stream);                
             });
-        
-            
-
     }, []);
 
    
@@ -119,9 +102,13 @@ export default function Video() {
                 <h2>Remote Video:</h2>
                 <video height="320" ref={remoteVideoRef} autoPlay controls></video>
             </div>
-            
+            <div>
+                {offer && <pre>{JSON.stringify(offer, null, 2)}</pre>}
+
+                {answer && <pre>{JSON.stringify(answer, null, 2)}</pre>}
+            </div>
               
-            {offer && <pre>{JSON.stringify(offer, null, 2)}</pre>}
+            
         </div>
     )
 }
